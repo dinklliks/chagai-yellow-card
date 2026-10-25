@@ -1,6 +1,7 @@
 // Sound: three short clips played through Web Audio, plus the persisted mute switch.
-// iOS only lets audio start inside a user gesture, so nothing is created or decoded until the first
-// tap/click/key anywhere on the page; that same gesture then plays its own sound once decoding is done.
+// iOS only lets audio start inside a user gesture, so the clips are downloaded on page load but the
+// context isn't created (and nothing decoded) until the first tap/click/key anywhere on the page; that
+// same gesture then plays its own sound once decoding is done.
 
 import { defaultStorage } from './state.ts'
 import type { KeyValueStorage } from './state.ts'
@@ -11,8 +12,11 @@ export const SOUNDS: readonly SoundName[] = ['whistle-short', 'whistle-long', 'c
 
 export const MUTE_KEY = 'chagai:muted'
 
-/** A sound asked for while its clip is still decoding plays late, but only this late; after that it's dropped. */
-const LATE_MS = 300
+/**
+ * A sound asked for while its clip is still loading plays late, but only this late; after that it's dropped.
+ * Generous because the first tap waits on decoding, and on its download too if it came before that finished.
+ */
+const LATE_MS = 1000
 
 /** Where a clip is served from; files live in `public/sounds/`, under Vite's base path. */
 export function soundUrl(name: SoundName, base: string = import.meta.env.BASE_URL): string {
@@ -40,9 +44,42 @@ let muted = loadMuted()
 let context: AudioContext | undefined
 let master: GainNode | undefined
 const buffers = new Map<SoundName, AudioBuffer>()
+const downloads = new Map<SoundName, Promise<ArrayBuffer | undefined>>()
 let loading: Promise<void> | undefined
 
-/** Creates the audio context and decodes every clip. Idempotent; must first run inside a user gesture. */
+/** Starts fetching every clip. Needs no gesture, so it runs on page load and the first tap only has to decode. */
+function download(): void {
+  for (const name of SOUNDS) {
+    downloads.set(
+      name,
+      fetch(soundUrl(name))
+        .then((response) => {
+          if (!response.ok) throw new Error(`${response.status} for ${name}`)
+          return response.arrayBuffer()
+        })
+        .catch((error: unknown) => {
+          console.warn('Sound failed to load:', name, error)
+          return undefined
+        }),
+    )
+  }
+}
+
+/**
+ * Web Audio on iOS follows the silent switch unless the page says it plays real sound (Safari 17+ has
+ * `navigator.audioSession`; elsewhere this does nothing). Without it most iPhones never hear a whistle.
+ */
+function ignoreSilentSwitch(): void {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
+  if (!session) return
+  try {
+    session.type = 'playback'
+  } catch {
+    // ignore: sound still plays when the switch is off
+  }
+}
+
+/** Creates the audio context and decodes every downloaded clip. Idempotent; must first run inside a user gesture. */
 function unlock(): void {
   if (context || typeof AudioContext === 'undefined') return
   context = new AudioContext()
@@ -55,22 +92,24 @@ function unlock(): void {
   const ctx = context
   loading = Promise.all(
     SOUNDS.map(async (name) => {
+      const data = await downloads.get(name)
+      if (!data) return
       try {
-        const response = await fetch(soundUrl(name))
-        if (!response.ok) throw new Error(`${response.status} for ${name}`)
-        buffers.set(name, await ctx.decodeAudioData(await response.arrayBuffer()))
+        buffers.set(name, await ctx.decodeAudioData(data))
       } catch (error) {
-        console.warn('Sound failed to load:', name, error)
+        console.warn('Sound failed to decode:', name, error)
       }
     }),
   ).then(() => {})
 }
 
 /**
- * Listens for the first user gesture to start audio. Capture phase on window, so it runs before the
- * button's own click handler and that first tap can already ask for its whistle.
+ * Downloads the clips and listens for the first user gesture to start audio. Capture phase on window, so
+ * it runs before the button's own click handler and that first tap can already ask for its whistle.
  */
 export function initAudio(): void {
+  ignoreSilentSwitch()
+  download()
   const events = ['touchend', 'click', 'keydown'] as const
   const onGesture = (): void => {
     unlock()
