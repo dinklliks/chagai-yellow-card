@@ -1,0 +1,537 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --pitch: #1f6f3a;
+  --pitch-dark: #17532b;
+  --chalk: #f7f7f2;
+  --yellow: #ffd400;
+  --yellow-dark: #c9a700;
+  --red: #e0262b;
+  --green-card: #2ecc55;
+  --ink: #1a1a1a;
+  --gutter: 12px;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  /* Never zoom on double-tap: the whole game is rapid tapping. */
+  touch-action: manipulation;
+  font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  background: var(--pitch);
+  color: var(--chalk);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Component display rules below must not override the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  height: 100vh;
+  height: 100dvh;
+  padding: max(var(--gutter), env(safe-area-inset-top)) max(var(--gutter), env(safe-area-inset-right))
+    max(var(--gutter), env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  /* Faint pitch stripes. */
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--pitch) 0 64px,
+    var(--pitch-dark) 64px 128px
+  );
+}
+
+/* Header controls: mute on the start (right in RTL), reset on the end. */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.25);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.icon-btn[aria-pressed='true'] {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.text-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.9rem;
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+/* Wrong-name meter. */
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgb(0 0 0 / 0.3);
+}
+
+.meter-counts {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--gutter);
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.count-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip {
+  display: inline-block;
+  width: 16px;
+  height: 22px;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
+}
+
+.chip-yellow {
+  background: var(--yellow);
+}
+
+.chip-red {
+  background: var(--red);
+}
+
+.rank {
+  text-align: center;
+  font-size: 1rem;
+}
+
+.rank-label {
+  opacity: 0.75;
+}
+
+.rank-text {
+  font-weight: 700;
+}
+
+/* Play area: the main button takes all remaining height. */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+}
+
+.main-btn {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border-radius: 28px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-size: clamp(3.5rem, 22vw, 9rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow:
+    0 8px 0 var(--yellow-dark),
+    0 12px 24px rgb(0 0 0 / 0.35);
+  transition: transform 60ms ease-out, box-shadow 60ms ease-out;
+}
+
+.main-btn:active {
+  transform: translateY(6px);
+  box-shadow:
+    0 2px 0 var(--yellow-dark),
+    0 4px 10px rgb(0 0 0 / 0.35);
+}
+
+/* Held under a giant yellow or red card (main.ts): taps are ignored, so the buttons don't even press in
+   (pointer taps pass through to the stage; main.ts also drops keyboard clicks). */
+.main-btn.held,
+.hagy-btn.held {
+  pointer-events: none;
+}
+
+/* Sent off (src/suspension.ts): until "חגי" is tapped. Dull dark-red stripes, flat (no raised edge, no
+   press effect), and the label reads "הורחקת" behind a small red card. */
+.main-btn[aria-disabled='true'] {
+  background: repeating-linear-gradient(-45deg, #4a1517 0 16px, #3b1012 16px 32px);
+  color: rgb(247 247 242 / 0.8);
+  cursor: not-allowed;
+  box-shadow: inset 0 0 0 3px rgb(0 0 0 / 0.3);
+}
+
+.main-btn[aria-disabled='true']:active {
+  transform: none;
+}
+
+.main-btn[aria-disabled='true'] .main-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.main-btn[aria-disabled='true'] .main-label::before {
+  content: '';
+  width: 0.5em;
+  height: 0.7em;
+  border-radius: 0.08em;
+  background: var(--red);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.5);
+  transform: rotate(-8deg);
+}
+
+/* "אתה בחוץ!" note, hidden until a tap on the locked button animates it in. */
+.out-msg {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 12%;
+  margin-inline: auto;
+  width: max-content;
+  max-width: 90%;
+  padding: 6px 18px;
+  border-radius: 12px;
+  background: var(--chalk);
+  color: var(--red);
+  font-size: clamp(1.4rem, 8vw, 2.4rem);
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hagy-btn {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 64px;
+  width: 100%;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--green-card);
+  color: var(--ink);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  box-shadow: 0 5px 0 #1f9a3e;
+  transition: transform 60ms ease-out, box-shadow 60ms ease-out;
+}
+
+.hagy-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #1f9a3e;
+}
+
+/* Only shown while sent off (below). */
+.hagy-hint {
+  display: none;
+}
+
+/* Sent off (src/hagy.ts): "חגי" takes the big spot with the way back in, the locked main button shrinks
+   below it showing "הורחקת". */
+.stage.sent-off .hagy-btn {
+  order: -1;
+  flex: 1;
+  min-height: 0;
+  border-radius: 28px;
+  font-size: clamp(3rem, 18vw, 7rem);
+  font-weight: 900;
+  box-shadow:
+    0 8px 0 #1f9a3e,
+    0 12px 24px rgb(0 0 0 / 0.35);
+}
+
+.stage.sent-off .hagy-hint {
+  display: block;
+  max-width: 16em;
+  font-size: clamp(1.15rem, 6vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.stage.sent-off .main-btn {
+  flex: none;
+  height: 88px;
+  border-radius: 20px;
+  font-size: 2.6rem;
+}
+
+/* Over the "הורחקת" label while it flashes: the short button has no room beside it. */
+.stage.sent-off .out-msg {
+  inset-block: 0;
+  height: max-content;
+  margin: auto;
+  font-size: 1.6rem;
+}
+
+.bottombar {
+  display: flex;
+}
+
+.share-btn {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 999px;
+  background: var(--chalk);
+  color: var(--pitch-dark);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Share only where the phone share sheet is the point: hidden when the main input is a mouse or trackpad
+   (laptops, desktops), shown on touch-first devices. */
+@media (hover: hover) and (pointer: fine) {
+  .bottombar {
+    display: none;
+  }
+}
+
+.main-btn:focus-visible,
+.hagy-btn:focus-visible,
+.share-btn:focus-visible,
+.icon-btn:focus-visible,
+.text-btn:focus-visible {
+  outline: 3px solid var(--chalk);
+  outline-offset: 3px;
+}
+
+/* Flying cards (src/cards.ts): positioned at the tap point, centered on it. */
+.flying-card {
+  position: fixed;
+  z-index: 10;
+  width: 48px;
+  height: 66px;
+  margin: -33px 0 0 -24px;
+  border-radius: 5px;
+  /* Dark edge so a yellow card stays visible over the yellow main button. */
+  border: 2px solid rgb(0 0 0 / 0.45);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.flying-card-yellow {
+  background: var(--yellow);
+}
+
+.flying-card-green {
+  background: var(--green-card);
+}
+
+/* Milestone overlays (src/overlays.ts): above the flying cards, never blocking taps. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(var(--gutter), env(safe-area-inset-top)) max(var(--gutter), env(safe-area-inset-right))
+    max(var(--gutter), env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  /* Dark backdrop so the giant yellow card stands apart from the yellow main button. */
+  background: rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+
+.overlay-red {
+  background: rgb(60 0 0 / 0.7);
+}
+
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-height: 100%;
+  will-change: transform;
+}
+
+.big-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(78vw, 46dvh, 380px);
+  aspect-ratio: 2 / 3;
+  padding: 22px;
+  border-radius: 18px;
+  border: 5px solid rgb(0 0 0 / 0.55);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.55);
+}
+
+.big-card-yellow {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.big-card-red {
+  background: var(--red);
+  color: var(--chalk);
+}
+
+.big-card-quote {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1.3rem, 6.5vw, 2rem);
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.sent-off-banner {
+  padding: 8px 28px;
+  border-radius: 12px;
+  background: var(--chalk);
+  color: var(--red);
+  font-size: clamp(2.6rem, 15vw, 5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  transform: rotate(-4deg);
+}
+
+/* Praise line for "חגי" and the "הועתק" toast (src/overlays.ts showPraise/showToast): near the top, above the overlays, invisible until
+   animated. */
+.praise {
+  position: fixed;
+  z-index: 30;
+  top: calc(max(var(--gutter), env(safe-area-inset-top)) + 56px);
+  inset-inline: 0;
+  margin-inline: auto;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--gutter));
+  padding: 10px 20px;
+  border-radius: 16px;
+  border: 3px solid #1f9a3e;
+  background: var(--chalk);
+  color: var(--pitch-dark);
+  font-size: clamp(1.1rem, 5.5vw, 1.5rem);
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Red card screen shake: the class sits on body, the motion on #app so fixed layers stay put. */
+body.shake #app {
+  animation: shake 500ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate(-2px, 1px);
+  }
+  20%,
+  80% {
+    transform: translate(5px, -2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate(-9px, 3px);
+  }
+  40%,
+  60% {
+    transform: translate(9px, -3px);
+  }
+}
+
+/* Laptops and tablets: the phone layout as a centered panel instead of stretching edge to edge. Phones,
+   including landscape (under 600px tall), keep the full-screen layout above. */
+@media (min-width: 600px) and (min-height: 600px) {
+  :root {
+    --app-h: min(100dvh - 48px, 860px);
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    height: 100dvh;
+    background: #123f22;
+  }
+
+  #app {
+    width: calc(100% - 48px);
+    max-width: 460px;
+    height: var(--app-h);
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+  }
+
+  /* The vw clamps above are sized for a phone-wide screen; the panel is fixed width. */
+  .main-btn {
+    font-size: 6.5rem;
+  }
+
+  .stage.sent-off .hagy-btn {
+    font-size: 5.5rem;
+  }
+
+  .stage.sent-off .hagy-hint {
+    font-size: 1.5rem;
+  }
+
+  .out-msg {
+    font-size: 2rem;
+  }
+
+  /* Near the panel's top rather than the window's. */
+  .praise {
+    top: calc((100dvh - var(--app-h)) / 2 + 68px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-btn,
+  .hagy-btn {
+    transition: none;
+  }
+
+  body.shake #app {
+    animation: none;
+  }
+}
