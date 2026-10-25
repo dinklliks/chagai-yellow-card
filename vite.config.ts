@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  // Served from GitHub Pages at /<repo-name>/; must match the repo name.
-  base: '/chagai-yellow-card/',
+  // Served at the root of the custom domain chagai-yellow-card.site.
+  base: '/',
   test: {
     include: ['tests/**/*.test.ts'],
     passWithNoTests: true,
