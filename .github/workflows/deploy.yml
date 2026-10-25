@@ -1,5 +1,5 @@
-# Builds the site and publishes dist/ to GitHub Pages.
-# Needs Settings > Pages > Source set to "GitHub Actions".
+# Builds the site and pushes dist/ to the gh-pages branch.
+# Needs Settings > Pages > Source set to "Deploy from a branch", gh-pages, / (root).
 name: Deploy to GitHub Pages
 
 on:
@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 # One deploy at a time; let an in-progress deploy finish rather than cancel it.
 concurrency:
@@ -18,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -29,17 +27,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+      # Replace gh-pages with a single commit holding only the build output.
+      - name: Push dist/ to gh-pages
+        working-directory: dist
+        run: |
+          git init -q -b gh-pages
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

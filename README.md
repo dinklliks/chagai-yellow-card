@@ -15,11 +15,11 @@ The site is served from the root of the custom domain `chagai-yellow-card.site` 
 
 ## Deploy
 
-`.github/workflows/deploy.yml` runs on every push to `main` (or by hand from the Actions tab): `npm ci`, `npm test`, `npm run build`, then publishes `dist/` to GitHub Pages.
+`.github/workflows/deploy.yml` runs on every push to `main` (or by hand from the Actions tab): `npm ci`, `npm test`, `npm run build`, then force-pushes `dist/` to the `gh-pages` branch, which GitHub Pages serves. `public/CNAME` keeps the custom domain and `public/.nojekyll` stops Pages from running Jekyll over the build.
 
-One-time setup:
+One-time setup, after the first push to `main` has created `gh-pages`:
 
-1. In the repo, Settings > Pages > Build and deployment > Source: **GitHub Actions**.
+1. In the repo, Settings > Pages > Build and deployment > Source: **Deploy from a branch**, branch **gh-pages**, folder **/ (root)**.
 
 The site is then at `http://chagai-yellow-card.site/`. To check the production build locally: `npm run build && npx vite preview`, then open `http://localhost:4173/`.
 
