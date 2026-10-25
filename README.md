@@ -11,7 +11,7 @@ npm test                # vitest
 npm run build           # type check + production build into dist/
 ```
 
-The site is served from `/chagai/` (GitHub Pages), set by `base` in `vite.config.ts`. Change it if the repo name changes.
+The site is served from `/chagai-yellow-card/` (GitHub Pages), set by `base` in `vite.config.ts`. Change it if the repo name changes.
 
 ## Deploy
 
@@ -22,7 +22,7 @@ One-time setup:
 1. The GitHub repo must be named `chagai`, or `base` in `vite.config.ts` must be changed to `/<repo-name>/`.
 2. In the repo, Settings > Pages > Build and deployment > Source: **GitHub Actions**.
 
-The site is then at `https://<user>.github.io/chagai/`. To check the production build locally: `npm run build && npx vite preview`, then open `http://localhost:4173/chagai/`.
+The site is then at `https://<user>.github.io/chagai-yellow-card/`. To check the production build locally: `npm run build && npx vite preview`, then open `http://localhost:4173/chagai-yellow-card/`.
 
 ## Sounds
 

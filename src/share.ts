@@ -5,7 +5,7 @@ export function shareText(yellow: number, red: number, url: string): string {
   return `קיבלתי ${yellow} צהובים ו-${red} אדומים מחגי\n${url}`
 }
 
-/** The site's own address: the page origin plus Vite's base ('/chagai/' in production; './' resolves too). */
+/** The site's own address: the page origin plus Vite's base ('/chagai-yellow-card/' in production; './' resolves too). */
 export function siteUrl(origin: string, base: string): string {
   return new URL(base, origin + '/').href
 }
